@@ -42,7 +42,7 @@ public class RunManager {
         String provider = LocationManager.GPS_PROVIDER;
 
         // Start updates from the location manager
-        PendingIntent pi = getLocationPendingIntent(false);
+        PendingIntent pi = getLocationPendingIntent(true);
         mLocationManager.requestLocationUpdates(provider, 0, 0, pi);
     }
 
