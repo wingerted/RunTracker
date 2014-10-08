@@ -6,10 +6,21 @@ import java.util.Date;
  * Created by wingerted on 14/10/8.
  */
 public class Run {
+
+    private long mId;
     private Date mStartDate;
 
     public Run() {
+        mId = -1;
         mStartDate = new Date();
+    }
+
+    public long getId() {
+        return mId;
+    }
+
+    public void setId(long id) {
+        mId = id;
     }
 
     public Date getStartDate() {

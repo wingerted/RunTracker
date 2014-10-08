@@ -25,6 +25,11 @@
                 <action android:name="com.wingerted.runtracker.ACTION_LOCATION" />
             </intent-filter>
         </receiver>
+        <receiver android:name=".TrackingLocationReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="com.wingerted.runtracker.ACTION_LOCATION" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
