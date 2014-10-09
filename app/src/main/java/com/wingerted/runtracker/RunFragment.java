@@ -16,11 +16,17 @@ import android.widget.Toast;
 
 
 public class RunFragment extends Fragment {
-
+    private static final String TAG = "RunFragment";
+    private static final String ARG_RUN_ID = "RUN_ID";
+    private Run mRun;
+    private Location mLastLocation;
     private BroadcastReceiver mLocationReceiver = new LocationReceiver() {
 
         @Override
         protected void onLocationReceived(Context context, Location loc) {
+            if (!mRunManager.isTrackingRun(mRun)) {
+                return;
+            }
             mLastLocation = loc;
             if (isVisible()) {
                 updateUI();
@@ -33,14 +39,17 @@ public class RunFragment extends Fragment {
             Toast.makeText(getActivity(), toastText, Toast.LENGTH_LONG).show();
         }
     };
-
-    private Run mRun;
-    private Location mLastLocation;
     private RunManager mRunManager;
     private Button mStartButton, mStopButton;
     private TextView mStartedTextView, mLatitudeTextView, mLongitudeTextView, mAltitudeTextView, mDurationTextView;
 
-
+    public static RunFragment newInstance(long runId) {
+        Bundle args = new Bundle();
+        args.putLong(ARG_RUN_ID, runId);
+        RunFragment rf = new RunFragment();
+        rf.setArguments(args);
+        return rf;
+    }
 
 
     @Override
@@ -48,6 +57,16 @@ public class RunFragment extends Fragment {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
         mRunManager = RunManager.get(getActivity());
+
+        // Check for a run ID as an argument, and find the run
+        Bundle args = getArguments();
+        if (args != null) {
+            long runId = args.getLong(ARG_RUN_ID, -1);
+            if (runId != -1) {
+                mRun = mRunManager.getRun(runId);
+                mLastLocation = mRunManager.getLastLocationForRun(runId);
+            }
+        }
     }
 
     @Override
@@ -65,7 +84,11 @@ public class RunFragment extends Fragment {
         mStartButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mRun = mRunManager.startNewRun();
+                if (mRun == null) {
+                    mRun = mRunManager.startNewRun();
+                } else {
+                    mRunManager.startTrackingRun(mRun);
+                }
                 updateUI();
             }
         });
@@ -74,7 +97,7 @@ public class RunFragment extends Fragment {
         mStopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mRunManager.stoprun();
+                mRunManager.stopRun();
                 updateUI();
             }
         });
@@ -98,6 +121,7 @@ public class RunFragment extends Fragment {
 
     private void updateUI() {
         boolean started = mRunManager.isTrackingRun();
+        boolean trackingThisRun = mRunManager.isTrackingRun(mRun);
 
         if (mRun != null) {
             mStartedTextView.setText(mRun.getStartDate().toString());
@@ -114,6 +138,6 @@ public class RunFragment extends Fragment {
         mDurationTextView.setText(Run.formatDuration(durationSeconds));
 
         mStartButton.setEnabled(!started);
-        mStopButton.setEnabled(started);
+        mStopButton.setEnabled(started && trackingThisRun);
     }
 }
