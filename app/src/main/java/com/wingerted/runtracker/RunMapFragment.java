@@ -1,11 +1,15 @@
 package com.wingerted.runtracker;
 
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
+import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,7 +32,23 @@ import java.util.Date;
 public class RunMapFragment extends SupportMapFragment implements LoaderManager.LoaderCallbacks<Cursor> {
     private static final String ARG_RUN_ID = "RUN_ID";
     private static final int LOAD_LOCATIONS = 0;
+    private LocationReceiver mLocationReceiver = new LocationReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // If you got a Location extra, use it
+            Bundle args = getArguments();
+            if (args != null) {
+                long runId = args.getLong(ARG_RUN_ID, -1);
+                if (runId != -1) {
+                    LoaderManager lm = getLoaderManager();
+                    lm.restartLoader(LOAD_LOCATIONS, args, RunMapFragment.this);
+                }
+            }
 
+            mGoogleMap.clear();
+            updateUI();
+        }
+    };
     private GoogleMap mGoogleMap;
     private RunDatabaseHelper.LocationCursor mLocationCursor;
 
@@ -38,6 +58,18 @@ public class RunMapFragment extends SupportMapFragment implements LoaderManager.
         RunMapFragment rf = new RunMapFragment();
         rf.setArguments(args);
         return rf;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        getActivity().registerReceiver(mLocationReceiver, new IntentFilter(RunManager.ACTION_LOCATION));
+    }
+
+    @Override
+    public void onStop() {
+        getActivity().unregisterReceiver(mLocationReceiver);
+        super.onStop();
     }
 
     @Override
@@ -51,6 +83,7 @@ public class RunMapFragment extends SupportMapFragment implements LoaderManager.
             if (runId != -1) {
                 LoaderManager lm = getLoaderManager();
                 lm.initLoader(LOAD_LOCATIONS, args, this);
+
             }
         }
     }
@@ -98,6 +131,7 @@ public class RunMapFragment extends SupportMapFragment implements LoaderManager.
         LatLngBounds.Builder latLngBuilder = new LatLngBounds.Builder();
         // Iterate over the locations
         mLocationCursor.moveToFirst();
+        int count = 0;
         while (!mLocationCursor.isAfterLast()) {
             Location loc = mLocationCursor.getLocation();
             LatLng latLng = new LatLng(loc.getLatitude(), loc.getLongitude());
@@ -123,7 +157,10 @@ public class RunMapFragment extends SupportMapFragment implements LoaderManager.
             line.add(latLng);
             latLngBuilder.include(latLng);
             mLocationCursor.moveToNext();
+            count++;
         }
+
+        Log.d("XXX", String.valueOf(count));
 
         // Add the polyline to the map
         mGoogleMap.addPolyline(line);
