@@ -117,6 +117,10 @@ public class RunManager {
         }
     }
 
+    public RunDatabaseHelper.RunCursor queryRuns() {
+        return mHelper.queryRuns();
+    }
+
     public boolean isTrackingRun() {
         return getLocationPendingIntent(false) != null;
     }

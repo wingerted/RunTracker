@@ -2,9 +2,13 @@ package com.wingerted.runtracker;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
+import android.database.CursorWrapper;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.location.Location;
+
+import java.util.Date;
 
 /**
  * Created by wingerted on 14/10/8.
@@ -15,6 +19,7 @@ public class RunDatabaseHelper extends SQLiteOpenHelper {
 
     private static final String TABLE_RUN = "run";
     private static final String COLUMN_RUN_START_DATE = "start_date";
+    private static final String COLUMN_RUN_ID = "_id";
 
     private static final String TABLE_LOCATION = "location";
     private static final String COLUMN_LOCATION_LATITUDE = "latitude";
@@ -60,4 +65,28 @@ public class RunDatabaseHelper extends SQLiteOpenHelper {
         return getWritableDatabase().insert(TABLE_RUN, null, cv);
     }
 
+    public RunCursor queryRuns() {
+        // Equivalent to "select * from run order by start_date asc"
+        Cursor wrapped = getReadableDatabase().query(TABLE_RUN, null, null, null, null, null, COLUMN_RUN_START_DATE + " asc");
+        return new RunCursor(wrapped);
+    }
+
+    public static class RunCursor extends CursorWrapper {
+
+        public RunCursor(Cursor cursor) {
+            super(cursor);
+        }
+
+        public Run getRun() {
+            if (isBeforeFirst() || isAfterLast()) {
+                return null;
+            }
+            Run run = new Run();
+            long runid = getLong(getColumnIndex(COLUMN_RUN_ID));
+            run.setId(runid);
+            long startDate = getLong(getColumnIndex(COLUMN_RUN_START_DATE));
+            run.setStartDate(new Date(startDate));
+            return run;
+        }
+    }
 }
