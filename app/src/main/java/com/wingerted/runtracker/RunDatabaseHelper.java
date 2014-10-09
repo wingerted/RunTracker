@@ -94,6 +94,7 @@ public class RunDatabaseHelper extends SQLiteOpenHelper {
         return new LocationCursor(wrapped);
     }
 
+
     public static class LocationCursor extends CursorWrapper {
 
         public LocationCursor(Cursor c) {
